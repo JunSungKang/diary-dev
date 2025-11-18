@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dev Blog</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #151932;
+            --accent: #6366f1;
+            --accent-light: #818cf8;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --border: #1e293b;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            padding: 60px 0 40px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header-glow {
+            position: absolute;
+            top: -50%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-light), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        nav {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 40px 0;
+            padding: 15px;
+            background: var(--bg-secondary);
+            border-radius: 50px;
+            border: 1px solid var(--border);
+        }
+
+        nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            padding: 8px 20px;
+            border-radius: 25px;
+        }
+
+        nav a:hover, nav a.active {
+            color: var(--accent-light);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        .error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .posts-grid {
+            display: grid;
+            gap: 25px;
+            margin-top: 40px;
+        }
+
+        .post-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .post-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s ease;
+        }
+
+        .post-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(99, 102, 241, 0.2);
+        }
+
+        .post-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .post-date {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .post-date::before {
+            content: '📅';
+        }
+
+        .post-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+
+        .post-excerpt {
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+
+        .post-tags {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--accent-light);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+
+        .post-detail {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .post-detail.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .back-button {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 12px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .back-button:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+            transform: translateX(-5px);
+        }
+
+        .post-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 40px;
+            line-height: 1.8;
+        }
+
+        .post-content h1 {
+            color: var(--text-primary);
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: none;
+            -webkit-text-fill-color: var(--text-primary);
+        }
+
+        .post-content h2 {
+            color: var(--accent-light);
+            margin: 30px 0 15px;
+            font-size: 1.8rem;
+        }
+
+        .post-content h3 {
+            color: var(--accent-light);
+            margin: 25px 0 12px;
+            font-size: 1.4rem;
+        }
+
+        .post-content p {
+            margin-bottom: 20px;
+            color: var(--text-secondary);
+        }
+
+        .post-content ul, .post-content ol {
+            margin: 20px 0;
+            padding-left: 30px;
+            color: var(--text-secondary);
+        }
+
+        .post-content li {
+            margin: 10px 0;
+        }
+
+        .post-content a {
+            color: var(--accent-light);
+            text-decoration: none;
+            border-bottom: 1px solid var(--accent);
+            transition: all 0.3s ease;
+        }
+
+        .post-content a:hover {
+            color: var(--accent);
+        }
+
+        .post-content code {
+            background: var(--bg-primary);
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            color: var(--accent-light);
+            font-size: 0.9rem;
+        }
+
+        .post-content pre {
+            background: var(--bg-primary);
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            margin: 20px 0;
+            border: 1px solid var(--border);
+        }
+
+        .post-content pre code {
+            background: none;
+            padding: 0;
+        }
+
+        .post-content blockquote {
+            border-left: 4px solid var(--accent);
+            padding-left: 20px;
+            margin: 20px 0;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .post-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        footer {
+            text-align: center;
+            padding: 60px 0 40px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+            margin-top: 80px;
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .social-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .social-links a:hover {
+            color: var(--accent-light);
+            transform: translateY(-3px);
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            nav {
+                flex-direction: column;
+                gap: 10px;
+                border-radius: 15px;
+            }
+
+            .post-card {
+                padding: 20px;
+            }
+
+            .post-content {
+                padding: 25px;
+            }
+
+            .post-content h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-glow"></div>
+            <h1>Dev Blog</h1>
+            <p class="subtitle">코드와 생각을 기록하는 공간</p>
+        </header>
+
+        <nav id="year-nav">
+            <a href="#" class="nav-link active" data-year="all">All</a>
+        </nav>
+
+        <main id="main-content">
+            <div id="posts-list" class="posts-grid"></div>
+            <div id="post-detail" class="post-detail"></div>
+        </main>
+
+        <footer>
+            <div class="social-links">
+                <a href="https://github.com" target="_blank" title="GitHub">📦</a>
+                <a href="mailto:your@email.com" title="Email">✉️</a>
+                <a href="#" title="LinkedIn">💼</a>
+            </div>
+            <p>© 2025 Dev Blog. Made with ❤️</p>
+        </footer>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/11.1.1/marked.min.js"></script>
+    <script>
+        // GitHub 설정 (본인의 정보로 수정하세요)
+        const GITHUB_USERNAME = 'JunSungKang';  // GitHub 사용자명
+        const GITHUB_REPO = 'diary-dev';          // 저장소 이름
+        const GITHUB_BRANCH = 'main';             // 브랜치 (main 또는 master)
+
+        let allPosts = [];
+        const postsListEl = document.getElementById('posts-list');
+        const postDetailEl = document.getElementById('post-detail');
+        const navLinks = document.querySelectorAll('.nav-link');
+
+        // GitHub API로 디렉토리 목록 가져오기
+        async function getDirectories() {
+            try {
+                const response = await fetch(`https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/`);
+                if (!response.ok) throw new Error('저장소를 찾을 수 없습니다');
+                
+                const contents = await response.json();
+                const yearDirs = contents.filter(item => 
+                    item.type === 'dir' && /^\d{4}$/.test(item.name)
+                ).sort((a, b) => b.name.localeCompare(a.name));
+                
+                return yearDirs;
+            } catch (error) {
+                console.error('디렉토리 로드 실패:', error);
+                return [];
+            }
+        }
+
+        // 특정 연도의 포스트 목록 가져오기
+        async function getPostsFromYear(year) {
+            try {
+                const response = await fetch(`https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${year}`);
+                if (!response.ok) throw new Error('포스트를 찾을 수 없습니다');
+                
+                const files = await response.json();
+                const mdFiles = files.filter(file => file.name.endsWith('.md'));
+                
+                const posts = await Promise.all(mdFiles.map(async file => {
+                    const content = await fetchMarkdownContent(file.download_url);
+                    const metadata = parseMarkdownMetadata(content);
+                    
+                    return {
+                        year,
+                        filename: file.name,
+                        title: metadata.title || file.name.replace('.md', ''),
+                        date: metadata.date || `${year}-01-01`,
+                        excerpt: metadata.excerpt || content.substring(0, 150).replace(/#/g, '').trim() + '...',
+                        tags: metadata.tags || [],
+                        content: content,
+                        url: file.download_url
+                    };
+                }));
+                
+                return posts;
+            } catch (error) {
+                console.error(`${year}년 포스트 로드 실패:`, error);
+                return [];
+            }
+        }
+
+        // 마크다운 파일 내용 가져오기
+        async function fetchMarkdownContent(url) {
+            try {
+                const response = await fetch(url);
+                return await response.text();
+            } catch (error) {
+                console.error('마크다운 로드 실패:', error);
+                return '';
+            }
+        }
+
+        // 마크다운 메타데이터 파싱 (YAML front matter)
+        function parseMarkdownMetadata(content) {
+            const metadata = {};
+            const frontMatterRegex = /^---\s*\n([\s\S]*?)\n---\s*\n/;
+            const match = content.match(frontMatterRegex);
+            
+            if (match) {
+                const frontMatter = match[1];
+                const lines = frontMatter.split('\n');
+                
+                lines.forEach(line => {
+                    const [key, ...valueParts] = line.split(':');
+                    if (key && valueParts.length) {
+                        const value = valueParts.join(':').trim();
+                        
+                        if (key.trim() === 'tags') {
+                            // tags: [tag1, tag2] 형식 파싱
+                            const tagsMatch = value.match(/\[(.*?)\]/);
+                            if (tagsMatch) {
+                                metadata.tags = tagsMatch[1].split(',').map(t => t.trim());
+                            }
+                        } else {
+                            metadata[key.trim()] = value.replace(/['"]/g, '');
+                        }
+                    }
+                });
+            }
+            
+            return metadata;
+        }
+
+        // 마크다운 front matter 제거
+        function removeMarkdownMetadata(content) {
+            return content.replace(/^---\s*\n[\s\S]*?\n---\s*\n/, '');
+        }
+
+        // 모든 포스트 로드
+        async function loadAllPosts() {
+            postsListEl.innerHTML = '<div class="loading">포스트를 불러오는 중</div>';
+            
+            try {
+                const yearDirs = await getDirectories();
+                
+                if (yearDirs.length === 0) {
+                    postsListEl.innerHTML = '<div class="error">포스트를 찾을 수 없습니다. GitHub 설정을 확인해주세요.</div>';
+                    return;
+                }
+                
+                allPosts = [];
+                for (const yearDir of yearDirs) {
+                    const posts = await getPostsFromYear(yearDir.name);
+                    allPosts = allPosts.concat(posts);
+                }
+                
+                // 날짜순 정렬 (최신순)
+                allPosts.sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                renderPosts();
+            } catch (error) {
+                console.error('포스트 로드 실패:', error);
+                postsListEl.innerHTML = '<div class="error">포스트를 불러오는 중 오류가 발생했습니다.</div>';
+            }
+        }
+
+        // 포스트 목록 렌더링
+        function renderPosts() {
+            if (allPosts.length === 0) {
+                postsListEl.innerHTML = '<div class="error">포스트가 없습니다.</div>';
+                return;
+            }
+            
+            postsListEl.innerHTML = allPosts.map((post, index) => `
+                <div class="post-card" onclick="showPost(${index})">
+                    <div class="post-date">${post.date}</div>
+                    <h2 class="post-title">${post.title}</h2>
+                    <p class="post-excerpt">${post.excerpt}</p>
+                    ${post.tags.length > 0 ? `
+                        <div class="post-tags">
+                            ${post.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        // 포스트 상세보기
+        function showPost(postIndex) {
+            const post = allPosts[postIndex];
+            if (!post) return;
+
+            const contentWithoutMetadata = removeMarkdownMetadata(post.content);
+            const htmlContent = marked.parse(contentWithoutMetadata);
+
+            postDetailEl.innerHTML = `
+                <button class="back-button" onclick="showHome()">← 목록으로</button>
+                <article class="post-content">
+                    <h1>${post.title}</h1>
+                    <div class="post-date">${post.date}</div>
+                    ${post.tags.length > 0 ? `
+                        <div class="post-tags" style="margin: 20px 0;">
+                            ${post.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                        </div>
+                    ` : ''}
+                    <hr style="border: none; border-top: 1px solid var(--border); margin: 30px 0;">
+                    ${htmlContent}
+                </article>
+            `;
+
+            postsListEl.style.display = 'none';
+            postDetailEl.classList.add('active');
+            window.scrollTo(0, 0);
+        }
+
+        // 홈으로
+        function showHome() {
+            postsListEl.style.display = 'grid';
+            postDetailEl.classList.remove('active');
+            window.scrollTo(0, 0);
+        }
+
+        // About 페이지
+        function showAbout() {
+            postsListEl.style.display = 'none';
+            postDetailEl.classList.add('active');
+            postDetailEl.innerHTML = `
+                <button class="back-button" onclick="showHome()">← 목록으로</button>
+                <article class="post-content">
+                    <h1>About Me</h1>
+                    <p>안녕하세요! 개발을 사랑하는 개발자입니다.</p>
+                    <p>이 블로그에서는 제가 배우고 경험한 내용들을 공유합니다.</p>
+                    <h2>관심 분야</h2>
+                    <ul>
+                        <li>웹 개발 (Frontend & Backend)</li>
+                        <li>JavaScript / TypeScript</li>
+                        <li>React / Vue.js</li>
+                        <li>Node.js</li>
+                    </ul>
+                </article>
+            `;
+            window.scrollTo(0, 0);
+        }
+
+        // Archive 페이지
+        function showArchive() {
+            postsListEl.style.display = 'none';
+            postDetailEl.classList.add('active');
+            
+            const postsByYear = {};
+            allPosts.forEach((post, index) => {
+                const year = post.year;
+                if (!postsByYear[year]) postsByYear[year] = [];
+                postsByYear[year].push({ ...post, index });
+            });
+
+            const years = Object.keys(postsByYear).sort((a, b) => b - a);
+
+            postDetailEl.innerHTML = `
+                <button class="back-button" onclick="showHome()">← 목록으로</button>
+                <article class="post-content">
+                    <h1>Archive</h1>
+                    ${years.map(year => `
+                        <h2>${year}년</h2>
+                        ${postsByYear[year].map(post => `
+                            <div style="margin: 20px 0; padding: 20px; background: var(--bg-primary); border-radius: 10px; cursor: pointer;" onclick="showPost(${post.index})">
+                                <div style="color: var(--text-secondary); font-size: 0.9rem;">${post.date}</div>
+                                <h3 style="margin: 10px 0; color: var(--accent-light);">${post.title}</h3>
+                            </div>
+                        `).join('')}
+                    `).join('')}
+                </article>
+            `;
+            window.scrollTo(0, 0);
+        }
+
+        // 네비게이션
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                navLinks.forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+                
+                const page = link.dataset.page;
+                if (page === 'home') {
+                    showHome();
+                } else if (page === 'about') {
+                    showAbout();
+                } else if (page === 'archive') {
+                    showArchive();
+                }
+            });
+        });
+
+        // 초기 로드
+        loadAllPosts();
+    </script>
+</body>
+</html>
