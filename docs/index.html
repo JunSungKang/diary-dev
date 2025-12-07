@@ -539,6 +539,7 @@
                 const posts = await Promise.all(mdFiles.map(async file => {
                     const content = await fetchMarkdownContent(file.download_url);
                     const metadata = parseMarkdownMetadata(content);
+                    const cleanedContent = removeMarkdownMetadata(content);
 
                     // 날짜 우선순위: metadata.date > 커밋 날짜 > 연도 기본값
                     let date = metadata.date;
@@ -554,7 +555,7 @@
                         filename: file.name,
                         title: metadata.title || file.name.replace('.md', ''),
                         date: date,
-                        excerpt: metadata.excerpt || content.substring(0, 150).replace(/#/g, '').trim() + '...',
+                        excerpt: metadata.excerpt || cleanedContent.substring(0, 150).replace(/#/g, '').trim() + '...',
                         tags: metadata.tags || [],
                         content: content,
                         url: file.download_url
